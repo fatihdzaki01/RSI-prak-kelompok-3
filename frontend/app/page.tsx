@@ -1,139 +1,198 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  getAllData,
-  createData,
-  updateData,
-  deleteData,
-} from "../services/api";
 
-type DataType = {
+type Mahasiswa = {
   id: number;
   nama: string;
   nilai: number;
-  status?: string;
+  status: string;
 };
 
 export default function Home() {
-  const [data, setData] = useState<DataType[]>([]);
-  const [form, setForm] = useState({ nama: "", nilai: "" });
-  const [editId, setEditId] = useState<number | null>(null);
+  const [data, setData] = useState<Mahasiswa[]>([]);
+  const [nama, setNama] = useState("");
+  const [nilai, setNilai] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    try {
-      const res = await getAllData();
-      setData(res?.data || []);
-    } catch (error) {
-      console.error("Fetch error:", error);
-    }
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editNama, setEditNama] = useState("");
+  const [editNilai, setEditNilai] = useState("");
+
+  const fetchData = () => {
+    fetch("http://127.0.0.1:8000/data")
+      .then((res) => res.json())
+      .then((res) => {
+        setData(res.data);
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    try {
-      if (editId !== null) {
-        await updateData(editId, {
-          nama: form.nama,
-          nilai: Number(form.nilai),
-        });
-        setEditId(null);
-      } else {
-        await createData({
-          nama: form.nama,
-          nilai: Number(form.nilai),
-        });
-      }
+    await fetch("http://127.0.0.1:8000/data", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nama,
+        nilai: Number(nilai),
+      }),
+    });
 
-      setForm({ nama: "", nilai: "" });
-      fetchData();
-    } catch (error) {
-      console.error("Submit error:", error);
-    }
-  };
-
-  const handleEdit = (item: DataType) => {
-    setForm({ nama: item.nama, nilai: String(item.nilai) });
-    setEditId(item.id);
+    setNama("");
+    setNilai("");
+    fetchData();
   };
 
   const handleDelete = async (id: number) => {
-    try {
-      await deleteData(id);
-      fetchData();
-    } catch (error) {
-      console.error("Delete error:", error);
-    }
+    await fetch(`http://127.0.0.1:8000/data/${id}`, {
+      method: "DELETE",
+    });
+
+    fetchData();
+  };
+
+  const handleEdit = (item: Mahasiswa) => {
+    setEditId(item.id);
+    setEditNama(item.nama);
+    setEditNilai(item.nilai.toString());
+  };
+
+  const handleUpdate = async (id: number) => {
+    await fetch(`http://127.0.0.1:8000/data/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nama: editNama,
+        nilai: Number(editNilai),
+      }),
+    });
+
+    setEditId(null);
+    fetchData();
   };
 
   return (
-    <main style={{ padding: "20px", maxWidth: "800px", margin: "auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>
-        Sistem Informasi Bantuan Sosial
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold text-center mb-6">
+        📚 Data Mahasiswa
       </h1>
 
-      {/* FORM */}
-      <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-md rounded-lg p-4 max-w-xl mx-auto mb-6"
+      >
+        <h2 className="text-xl font-semibold mb-3">Tambah Data</h2>
+
         <input
           type="text"
           placeholder="Nama"
-          value={form.nama}
-          onChange={(e) => setForm({ ...form, nama: e.target.value })}
-          style={{ border: "1px solid #ccc", padding: "8px", width: "100%", marginBottom: "10px" }}
+          value={nama}
+          onChange={(e) => setNama(e.target.value)}
+          className="w-full p-2 border rounded mb-2"
+          required
         />
 
         <input
           type="number"
           placeholder="Nilai"
-          value={form.nilai}
-          onChange={(e) => setForm({ ...form, nilai: e.target.value })}
-          style={{ border: "1px solid #ccc", padding: "8px", width: "100%", marginBottom: "10px" }}
+          value={nilai}
+          onChange={(e) => setNilai(e.target.value)}
+          className="w-full p-2 border rounded mb-2"
+          required
         />
 
-        <button type="submit" style={{ padding: "8px 16px" }}>
-          {editId !== null ? "Update" : "Tambah"}
+        <button className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
+          Tambah
         </button>
       </form>
 
-      {/* TABLE */}
-      <table border={1} cellPadding={10} width="100%">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nama</th>
-            <th>Nilai</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
+      {loading ? (
+        <p className="text-center">Loading...</p>
+      ) : (
+        <div className="grid gap-4 max-w-xl mx-auto">
           {data.map((item) => (
-            <tr key={item.id}>
-              <td align="center">{item.id}</td>
-              <td align="center">{item.nama}</td>
-              <td align="center">{item.nilai}</td>
-              <td
-                align="center"
-                style={{
-                  color: item.status === "lulus" ? "green" : "red",
-                  fontWeight: "bold",
-                }}
-              >
-                {item.status}
-              </td>
-              <td align="center">
-                <button onClick={() => handleEdit(item)}>Edit</button>{" "}
-                <button onClick={() => handleDelete(item.id)}>Hapus</button>
-              </td>
-            </tr>
+            <div
+              key={item.id}
+              className="bg-white shadow-md rounded-lg p-4"
+            >
+              {editId === item.id ? (
+                <>
+                  <input
+                    value={editNama}
+                    onChange={(e) => setEditNama(e.target.value)}
+                    className="w-full p-2 border rounded mb-2"
+                  />
+
+                  <input
+                    type="number"
+                    value={editNilai}
+                    onChange={(e) => setEditNilai(e.target.value)}
+                    className="w-full p-2 border rounded mb-2"
+                  />
+
+                  <button
+                    onClick={() => handleUpdate(item.id)}
+                    className="bg-green-500 text-white px-3 py-1 rounded mr-2"
+                  >
+                    Simpan
+                  </button>
+
+                  <button
+                    onClick={() => setEditId(null)}
+                    className="bg-gray-400 text-white px-3 py-1 rounded"
+                  >
+                    Batal
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl font-semibold">{item.nama}</h2>
+
+                  <p className="text-gray-600">
+                    Nilai: {item.nilai}
+                  </p>
+
+                  <p
+                    className={`font-bold ${
+                      item.status === "lulus"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {item.status}
+                  </p>
+
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => handleEdit(item)}
+                      className="bg-yellow-500 text-white px-3 py-1 rounded"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           ))}
-        </tbody>
-      </table>
-    </main>
+        </div>
+      )}
+    </div>
   );
 }

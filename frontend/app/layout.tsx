@@ -1,5 +1,9 @@
+import "./globals.css";
 
-// app/layout.tsx
+export const metadata = {
+  title: "RSI Kelompok 3",
+  description: "Frontend App",
+};
 
 export default function RootLayout({
   children,
