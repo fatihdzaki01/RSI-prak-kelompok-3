@@ -46,7 +46,7 @@ def get_data_by_id(id: int):
 # POST
 @router.post("/data")
 def create_data(item: dict):
-    new_item = data_services.create_data(item)
+    new_item = data_services.post_data(item)
 
     temp = new_item.copy()
     temp["status"] = get_status(new_item["nilai"])
@@ -60,7 +60,7 @@ def create_data(item: dict):
 # PUT
 @router.put("/data/{id}")
 def update_data(id: int, item: dict):
-    updated = data_services.update_data(id, item)
+    updated = data_services.put_data(id, item)
 
     if not updated:
         raise HTTPException(status_code=404, detail="Data not found")
