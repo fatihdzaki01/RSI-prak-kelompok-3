@@ -41,3 +41,48 @@ def get_data_by_id(id: int):
         "status": "success",
         "data": temp
     }
+
+
+# POST
+@router.post("/data")
+def create_data(item: dict):
+    new_item = data_services.create_data(item)
+
+    temp = new_item.copy()
+    temp["status"] = get_status(new_item["nilai"])
+
+    return {
+        "status": "success",
+        "data": temp
+    }
+
+
+# PUT
+@router.put("/data/{id}")
+def update_data(id: int, item: dict):
+    updated = data_services.update_data(id, item)
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Data not found")
+
+    temp = updated.copy()
+    temp["status"] = get_status(updated["nilai"])
+
+    return {
+        "status": "success",
+        "data": temp
+    }
+
+
+# DELETE
+@router.delete("/data/{id}")
+def delete_data(id: int):
+    deleted = data_services.delete_data(id)
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Data not found")
+
+    return {
+        "status": "success",
+        "message": f"Data dengan id {id} berhasil dihapus"
+    }
