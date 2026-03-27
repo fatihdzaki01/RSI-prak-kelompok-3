@@ -1,10 +1,5 @@
 [
   {
-    "id": 1,
-    "nama": "Angel",
-    "nilai": 92
-  },
-  {
     "id": 2,
     "nama": "Ani",
     "nilai": 78
@@ -48,5 +43,10 @@
     "id": 10,
     "nama": "Hadi",
     "nilai": 69
+  },
+  {
+    "nama": "acid",
+    "nilai": 100,
+    "id": 11
   }
 ]
